@@ -36,20 +36,11 @@ class CalendarTools(object):
                     self.cal.add_component(e)
             
     def eventTypeWebAurion(self,EventInfo,e):
-        match EventInfo[3]:
-            case "Cours":
-                e = self.DataWithOrganizer(e,EventInfo)
-            case "TP": 
-                e = self.DataWithOrganizer(e,EventInfo)
-            case "TD":
-                e = self.DataWithOrganizer(e,EventInfo)
-            case "Langues":
-                e = self.DataWithOrganizer(e,EventInfo)
-            case "Projet":
-                e = self.DataWithOrganizer(e,EventInfo)
-            case _:
-                e.add('location', EventInfo[3])
-                e.add('description', "")
+        if EventInfo[3] =="Cours" or EventInfo[3] == "TP" or EventInfo[3] == "TD" or EventInfo[3] == "Langues" or EventInfo[3] == "Projet" :
+            e = self.DataWithOrganizer(e,EventInfo)
+        else:
+            e.add('location', EventInfo[3])
+            e.add('description', "")
         return e
     
     def DataWithOrganizer(self,e,EventInfo):
