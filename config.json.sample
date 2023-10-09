@@ -1,0 +1,8 @@
+{
+    "webaurion":{
+        "host":"mycpe.cpe.fr",
+        "username":"matthieu.lapetitte@cpe.fr",
+        "password":"myPassword"
+    },
+    "icsfile":"mycalendar.ics"
+}
