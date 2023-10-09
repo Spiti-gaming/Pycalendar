@@ -2,7 +2,9 @@
     "webaurion":{
         "host":"mycpe.cpe.fr",
         "username":"exemple@cpe.fr",
-        "password":"myPassword"
+        "password":"myPassword",
+        "years":"True", //Get All the years calendar (if false only 2 week)
+        "Autonomie":"True"
     },
     "icsfile":"mycalendar.ics"
 }
