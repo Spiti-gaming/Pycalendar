@@ -29,9 +29,9 @@ class CalendarTools:
                 if event_info[3] != "Autonomie":
                     self.cal.add_component(e)
 
-
     def event_type_webaurion(self, event_info, e):
-        if event_info[3] == "Cours" \
+
+        if event_info[3].replace(' ', '') == "Cours" \
                 or event_info[3] == "TP" \
                 or event_info[3] == "TD" \
                 or event_info[3] == "Langues" \
@@ -43,21 +43,21 @@ class CalendarTools:
             e.add('description', "")
         return e
 
-    def data_with_organizer(self,e, event_info):
+    def data_with_organizer(self, e, event_info):
         # Refactor organiser
 
         teacher = self.name_printable(event_info[4].split(' '))
-        organizer = vCalAddress('MAILTO:'+teacher[0]+'.'+teacher[1]+"@cpe.fr")
+        organizer = vCalAddress('MAILTO:' + teacher[0] + '.' + teacher[1] + "@cpe.fr")
         organizer.params['cn'] = vText(event_info[1])
         organizer.params['role'] = vText('CHAIR')
         e['organizer'] = organizer
 
-        attendee = vCalAddress('MAILTO:'+event_info[1]+'@cpe.fr')
+        attendee = vCalAddress('MAILTO:' + event_info[1] + '@cpe.fr')
         attendee.params['cn'] = vText(event_info[1])
         attendee.params['ROLE'] = vText('REQ-PARTICIPANT')
 
         e.add('attendee', attendee, encode=0)
-        e.add('description', event_info[3] + "\n" + teacher[1] +' '+teacher[0])
+        e.add('description', event_info[3] + "\n" + teacher[1] + ' ' + teacher[0])
         e.add('location', event_info[0])
         return e
 
@@ -69,7 +69,7 @@ class CalendarTools:
             part_data = re.sub('[^A-Z]', '', data)
             if part_data == data:
                 if surname is not None:
-                    surname += '-'+data
+                    surname += '-' + data
                 else:
                     surname = data
             else:
