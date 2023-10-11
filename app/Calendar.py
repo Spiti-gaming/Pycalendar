@@ -29,6 +29,7 @@ class CalendarTools:
                 if event_info[3] != "Autonomie":
                     self.cal.add_component(e)
 
+
     def event_type_webaurion(self, event_info, e):
         if event_info[3] == "Cours" \
                 or event_info[3] == "TP" \
