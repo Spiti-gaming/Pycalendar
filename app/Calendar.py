@@ -31,6 +31,7 @@ class CalendarTools:
 
 
     def event_type_webaurion(self, event_info, e):
+        event_info[3] = event_info[3].replace(' ','')
         if event_info[3] == "Cours" \
                 or event_info[3] == "TP" \
                 or event_info[3] == "TD" \
