@@ -36,6 +36,7 @@ class CalendarTools(object):
                     self.cal.add_component(e)
             
     def eventTypeWebAurion(self,EventInfo,e):
+        EventInfo[3] = EventInfo[3].replace(' ','')
         if EventInfo[3] =="Cours" or EventInfo[3] == "TP" or EventInfo[3] == "TD" or EventInfo[3] == "Langues" or EventInfo[3] == "Projet" :
             e = self.DataWithOrganizer(e,EventInfo)
         else:
