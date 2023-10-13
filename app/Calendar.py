@@ -90,8 +90,10 @@ class EventInfo:
                 teacher_addr.params['cn'] = vText(teacher_acc.get_full_name())
                 teacher_addr.params['ROLE'] = vText('REQ-PARTICIPANT')
                 self.attendee.append(teacher_addr)
+        else:
+            self.description += teacher.get_full_name()
 
-        attendee = vCalAddress('MAILTO:' + self.data[1] + '@cpe.fr'+teacher_required)
+        attendee = vCalAddress('MAILTO:' + self.data[1] + '@cpe.fr')
         attendee.params['cn'] = vText(self.data[1])
         attendee.params['ROLE'] = vText('REQ-PARTICIPANT')
         self.attendee.append(attendee)
