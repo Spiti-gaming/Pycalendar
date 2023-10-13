@@ -20,7 +20,7 @@ class TimeManip2:
         self.time_stamp_stop = str(int(datetime.datetime.combine(self.end, datetime.time.max).timestamp() * 1000))
 
     def years(self):
-        year = str(self.today.year)
+
         self.start = datetime.date.fromisoformat(str(self.today.year) + '-08-01')
         self.end = datetime.date.fromisoformat(str(self.today.year + 1) + '-08-01')
 
