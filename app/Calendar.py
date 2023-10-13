@@ -104,11 +104,13 @@ class CalendarTools:
             e.add('attendee', event_info.attendee)
             e.add('description', event_info.description)
 
+
             if self.autonomie:
                 self.cal.add_component(e)
             else:
                 if event_info.data[3] != "Autonomie":
                     self.cal.add_component(e)
+
 
     def print_calendar_to_file(self, directory):
         with open(directory, 'wb') as f:
@@ -127,3 +129,4 @@ if __name__ == '__main__':
 
     event = EventInfo(data)
     print(event)
+
