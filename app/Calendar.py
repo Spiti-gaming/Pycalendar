@@ -2,9 +2,90 @@ import pytz
 import re
 from icalendar import Calendar, Event, vCalAddress, vText
 from dateutil import parser
+from dataclasses import dataclass, field
+import datetime
+
+
+@dataclass
+class Organizer:
+    data_in: dict
+    name: str or None = field(init=False)
+    surname: str or None = field(init=False)
+    email: str = field(init=False)
+
+    def __post_init__(self):
+        self.name = None
+        self.surname = None
+        for data_event in self.data_in:
+            part_data = re.sub('[^A-Z]', '', data_event)
+            if part_data == data_event:
+                if self.surname is not None:
+                    self.surname += '-' + data_event
+                else:
+                    self.surname = data_event
+            else:
+                if self.name is not None:
+                    self.name += data_event
+                else:
+                    self.name = data_event
+        self.email = f'{self.name}.{self.surname}@cpe.fr'
+
+    def get_full_name(self) -> str:
+        return f'{self.surname} {self.name}'
+
+
+@dataclass
+class EventInfo:
+    data: dict
+    summary: str = field(init=False)
+    description: str = field(init=False)
+    dtstart: datetime = field(init=False)
+    dtend: datetime = field(init=False)
+    location: str = field(init=False)
+    organizer: vCalAddress or str = field(init=False)
+    attendee: vCalAddress or str = field(init=False)
+
+    def __post_init__(self):
+        self.dtstart = parser.parse(self.data['start']).astimezone(pytz.utc)
+        self.dtend = parser.parse(self.data['end']).astimezone(pytz.utc)
+        self.data = self.data['title'].split('\n')
+        self.data[3] = self.data[3].replace(' ', '')
+        self.summary = self.data[2]
+        self.get_event_type_webaurion()
+
+    def get_event_type_webaurion(self):
+
+        if self.data[3] == "Cours" \
+                or self.data[3] == "TP" \
+                or self.data[3] == "TD" \
+                or self.data[3] == "Langues" \
+                or self.data[3] == "Projet":
+            self.get_organizer()
+        else:
+            self.location = self.data[3]
+            self.description = ""
+            self.organizer = ""
+            self.attendee = ""
+
+    def get_organizer(self):
+
+        teacher = Organizer(self.data[4].split(' '))
+        organizer = vCalAddress('MAILTO:' + teacher.email)
+        organizer.params['cn'] = vText(teacher.get_full_name())
+        organizer.params['role'] = vText('CHAIR')
+        self.organizer = organizer
+
+        attendee = vCalAddress('MAILTO:' + self.data[1] + '@cpe.fr')
+        attendee.params['cn'] = vText(self.data[1])
+        attendee.params['ROLE'] = vText('REQ-PARTICIPANT')
+
+        self.attendee = attendee
+        self.description = self.data[3] + "\n" + teacher.get_full_name()
+        self.location = self.data[0]
 
 
 class CalendarTools:
+
     def __init__(self, auto=True):
         self.cal = Calendar()
         self.autonomie = auto
@@ -12,74 +93,37 @@ class CalendarTools:
         self.cal.add('version', '2.0')
 
     def add_to_calendar_from_webaurion(self, json_data):
-        for event in json_data:
-            event_info = event['title'].split('\n')
+        for event_calendar in json_data:
+            event_info = EventInfo(event_calendar)
             e = Event()
-            e = self.event_type_webaurion(event_info, e)
-
-            e.add('summary', event_info[2])
-            start_time = parser.parse(event['start']).astimezone(pytz.utc)
-            end_time = parser.parse(event['end']).astimezone(pytz.utc)
-            e.add('dtstart', start_time)
-            e.add('dtend', end_time)
+            e.add('summary', event_info.summary)
+            e.add('dtstart', event_info.dtstart)
+            e.add('dtend', event_info.dtend)
+            e.add('location', event_info.location)
+            e.add('organizer', event_info.organizer)
+            e.add('attendee', event_info.attendee)
+            e.add('description', event_info.description)
 
             if self.autonomie:
                 self.cal.add_component(e)
             else:
-                if event_info[3] != "Autonomie":
+                if event_info.data[3] != "Autonomie":
                     self.cal.add_component(e)
-
-
-    def event_type_webaurion(self, event_info, e):
-        if event_info[3] == "Cours" \
-                or event_info[3] == "TP" \
-                or event_info[3] == "TD" \
-                or event_info[3] == "Langues" \
-                or event_info[3] == "Projet":
-
-            e = self.data_with_organizer(e, event_info)
-        else:
-            e.add('location', event_info[3])
-            e.add('description', "")
-        return e
-
-    def data_with_organizer(self,e, event_info):
-        # Refactor organiser
-
-        teacher = self.name_printable(event_info[4].split(' '))
-        organizer = vCalAddress('MAILTO:'+teacher[0]+'.'+teacher[1]+"@cpe.fr")
-        organizer.params['cn'] = vText(event_info[1])
-        organizer.params['role'] = vText('CHAIR')
-        e['organizer'] = organizer
-
-        attendee = vCalAddress('MAILTO:'+event_info[1]+'@cpe.fr')
-        attendee.params['cn'] = vText(event_info[1])
-        attendee.params['ROLE'] = vText('REQ-PARTICIPANT')
-
-        e.add('attendee', attendee, encode=0)
-        e.add('description', event_info[3] + "\n" + teacher[1] +' '+teacher[0])
-        e.add('location', event_info[0])
-        return e
-
-    @staticmethod
-    def name_printable(name_in):
-        name = None
-        surname = None
-        for data in name_in:
-            part_data = re.sub('[^A-Z]', '', data)
-            if part_data == data:
-                if surname is not None:
-                    surname += '-'+data
-                else:
-                    surname = data
-            else:
-                if name is not None:
-                    name += data
-                else:
-                    name = data
-        return [name, surname]
 
     def print_calendar_to_file(self, directory):
         with open(directory, 'wb') as f:
             print("Calendar File Created")
             f.write(self.cal.to_ical())
+
+
+if __name__ == '__main__':
+    data = {'id': '14184961',
+            'title': '\n4IRC GR1\nAnglais S7\nLangues\nKRISTENOVA Lucie\nIntensive\n',
+            'start': '2024-06-04T13:30:00+0200',
+            'end': '2024-06-04T17:15:00+0200',
+            'allDay': False,
+            'editable': True,
+            'className': 'N01_COURS_LANGUES'}
+
+    event = EventInfo(data)
+    print(event)
