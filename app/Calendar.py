@@ -43,14 +43,14 @@ class EventInfo:
     dtend: datetime = field(init=False)
     location: str = field(init=False)
     organizer: vCalAddress or str = field(init=False)
-    attendee: list[vCalAddress]= field(init=False)
+    attendee: list[vCalAddress] or str = field(init=False)
 
     def __post_init__(self):
         self.dtstart = parser.parse(self.data['start']).astimezone(pytz.utc)
         self.dtend = parser.parse(self.data['end']).astimezone(pytz.utc)
         self.data = self.data['title'].split('\n')
-        self.attendee=[]
-        self.data[3] = self.data[3].replace(' ', '')
+        self.attendee = []
+        self.data[3] = self.data[3].rstrip()
         self.summary = self.data[2]
         self.get_event_type_webaurion()
 
@@ -60,7 +60,9 @@ class EventInfo:
                 or self.data[3] == "TP" \
                 or self.data[3] == "TD" \
                 or self.data[3] == "Langues" \
-                or self.data[3] == "Projet":
+                or self.data[3] == "Projet" \
+                or self.data[3] == "Examen écrit" \
+                or self.data[3] == "Examen machine":
             self.get_organizer()
         else:
             self.location = self.data[3]
@@ -121,13 +123,11 @@ class CalendarTools:
                 e.add('attendee', element)
             e.add('description', event_info.description)
 
-
             if self.autonomie:
                 self.cal.add_component(e)
             else:
                 if event_info.data[3] != "Autonomie":
                     self.cal.add_component(e)
-
 
     def print_calendar_to_file(self, directory):
         with open(directory, 'wb') as f:
@@ -146,4 +146,3 @@ if __name__ == '__main__':
 
     event = EventInfo(data)
     print(event)
-
