@@ -19,16 +19,17 @@ class Organizer:
         for data_event in self.data_in:
             part_data = re.sub('[^A-Z]', '', data_event)
             if part_data == data_event:
-                if self.surname is not None:
-                    self.surname += '-' + data_event
-                else:
-                    self.surname = data_event
+                if data_event != '':
+                    if self.surname is not None:
+                        self.surname += '-' + data_event
+                    else:
+                        self.surname = data_event
             else:
                 if self.name is not None:
-                    self.name += data_event
+                    self.name += ' '+data_event
                 else:
                     self.name = data_event
-        self.email = f'{self.name}.{self.surname}@cpe.fr'
+        self.email = f'{self.name}.{self.surname}@cpe.fr'.replace(' ','-')
 
     def get_full_name(self) -> str:
         return f'{self.surname} {self.name}'
