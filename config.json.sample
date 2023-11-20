@@ -3,8 +3,8 @@
         "host":"mycpe.cpe.fr",
         "username":"exemple@cpe.fr",
         "password":"myPassword",
-        "years":"True", //Get All the years calendar (if false only 2 week)
-        "Autonomie":"True"
+        "years": true, //Get All the years calendar (if false only 2 week)
+        "Autonomie": true
     },
     "icsfile":"mycalendar.ics"
 }
