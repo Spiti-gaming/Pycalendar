@@ -19,17 +19,17 @@ class Organizer:
         for data_event in self.data_in:
             part_data = re.sub('[^A-Z]', '', data_event)
             if part_data == data_event:
-                if data_event != '':
-                    if self.surname is not None:
-                        self.surname += '-' + data_event
-                    else:
-                        self.surname = data_event
+
+                if self.surname is not None:
+                    self.surname += '-' + data_event
+                else:
+                    self.surname = data_event
             else:
                 if self.name is not None:
-                    self.name += ' '+data_event
+                    self.name += data_event
                 else:
                     self.name = data_event
-        self.email = f'{self.name}.{self.surname}@cpe.fr'.replace(' ','-')
+        self.email = f'{self.name}.{self.surname}@cpe.fr'
 
     def get_full_name(self) -> str:
         return f'{self.surname} {self.name}'
@@ -38,20 +38,23 @@ class Organizer:
 @dataclass
 class EventInfo:
     data: dict
+
     summary: str = field(init=False)
     description: str = field(init=False)
     dtstart: datetime = field(init=False)
     dtend: datetime = field(init=False)
     location: str = field(init=False)
     organizer: vCalAddress or str = field(init=False)
-    attendee: list[vCalAddress] or str = field(init=False)
+
+    attendee: list[vCalAddress] = field(init=False)
 
     def __post_init__(self):
         self.dtstart = parser.parse(self.data['start']).astimezone(pytz.utc)
         self.dtend = parser.parse(self.data['end']).astimezone(pytz.utc)
+        self.uid = self.data['id']
         self.data = self.data['title'].split('\n')
         self.attendee = []
-        self.data[3] = self.data[3].rstrip()
+        self.data[3] = self.data[3].replace(' ', '')
         self.summary = self.data[2]
         self.get_event_type_webaurion()
 
@@ -61,9 +64,10 @@ class EventInfo:
                 or self.data[3] == "TP" \
                 or self.data[3] == "TD" \
                 or self.data[3] == "Langues" \
-                or self.data[3] == "Projet" \
-                or self.data[3] == "Examen écrit" \
-                or self.data[3] == "Examen machine":
+
+                or self.data[3] == "Examenmachine" \
+                or self.data[3] == "Examenécrit" \
+                or self.data[3] == "Projet":
             self.get_organizer()
         else:
             self.location = self.data[3]
@@ -108,13 +112,18 @@ class CalendarTools:
     def __init__(self, auto=True):
         self.cal = Calendar()
         self.autonomie = auto
+
+        self.cal.add('method', 'REQUEST')
         self.cal.add('prod_id', '-//Spiti Calendar//mycpe.cpe.fr')
         self.cal.add('version', '2.0')
+        self.cal.add('calscale', "GREGORIAN")
 
     def add_to_calendar_from_webaurion(self, json_data):
         for event_calendar in json_data:
             event_info = EventInfo(event_calendar)
             e = Event()
+
+            e.add('uid', event_info.uid)
             e.add('summary', event_info.summary)
             e.add('dtstart', event_info.dtstart)
             e.add('dtend', event_info.dtend)
@@ -124,7 +133,7 @@ class CalendarTools:
                 e.add('attendee', element)
             e.add('description', event_info.description)
 
-            if self.autonomie:
+            if self.autonomie == True:
                 self.cal.add_component(e)
             else:
                 if event_info.data[3] != "Autonomie":
