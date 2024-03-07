@@ -28,7 +28,7 @@ class WebAurion(object):
         if cookie is not None:
             self.headers['Cookie'] = cookie.split(";")[0]
         if followRedirect is False:
-            return data.decode("utf-8")
+            return data
         if res.status != 302:
             return -1
         self.redirection(res, payload)
