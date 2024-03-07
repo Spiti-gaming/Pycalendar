@@ -79,6 +79,8 @@ def years():
 def week():
     start = datetime.today() - dt.timedelta(days=datetime.today().weekday())
     end = start + dt.timedelta(days=20)
+    start = start.strftime("%Y-%m-%d")
+    end = end.strftime("%Y-%m-%d")
 
     return start, end
 
