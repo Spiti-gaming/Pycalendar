@@ -50,12 +50,12 @@ class CalendarTools:
             if event_calendar['type_activite']:
                 event_info = EventInfo(event_calendar)
                 e = Event()
-                e.add('summary', event_info.summary)
+                e.add('summary', f"{event_info.summary} - {event_info.event_type}")
                 e.add('dtstart', event_info.dtstart)
                 e.add('dtend', event_info.dtend)
                 e.add('location', event_info.location)
                 e.add('organizer', event_info.organizer)
-                e.add('description', event_info.description)
+                e.add('description', f"{event_info.description}\n{event_info.event_type}")
 
                 if self.autonomie:
                     self.cal.add_component(e)
