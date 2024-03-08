@@ -100,35 +100,36 @@ def week():
 
 
 with open("config.json") as f:
-    config = json.load(f)
-conn = http.client.HTTPSConnection(config['webaurion']['host'])
-payload = 'username='+config['webaurion']['username']+'&password='+config['webaurion']['password']
-headers = {
-  'Content-Type': 'application/x-www-form-urlencoded'
-}
-conn.request("POST", "/login", payload, headers)
-res = conn.getresponse()
-data = res.read()
+    configs = json.load(f)
+for config in configs:
+    conn = http.client.HTTPSConnection(config['webaurion']['host'])
+    payload = 'username='+config['webaurion']['username']+'&password='+config['webaurion']['password']
+    headers = {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    }
+    conn.request("POST", "/login", payload, headers)
+    res = conn.getresponse()
+    data = res.read()
 
-headers['Cookie'] = res.getheader('Set-Cookie').split(";")[0]
+    headers['Cookie'] = res.getheader('Set-Cookie').split(";")[0]
 
-if config['webaurion']['years']:
-    start, end = years()
-else:
-    start, end = week()
+    if config['webaurion']['years']:
+        start, end = years()
+    else:
+        start, end = week()
 
-conn.request("GET", f"/mobile/mon_planning?date_debut={start}&date_fin={end}", "", headers)
-res = conn.getresponse()
-data2 = res.read()
+    conn.request("GET", f"/mobile/mon_planning?date_debut={start}&date_fin={end}", "", headers)
+    res = conn.getresponse()
+    data2 = res.read()
 
-data_json = json.loads(data2.decode("utf-8"))
+    data_json = json.loads(data2.decode("utf-8"))
 
-calender = CalendarTools()
-calendrier = calender.add_to_calendar_from_webaurion(data_json)
-if config.get('itii'):
-    calendrier = calender.get_itii_calendar(config['itii']['url'], config['itii']['host'])
-    print("ITII Calendar added")
+    calender = CalendarTools()
+    calendrier = calender.add_to_calendar_from_webaurion(data_json)
+    if config.get('itii'):
+        calendrier = calender.get_itii_calendar(config['itii']['url'], config['itii']['host'])
+        print("ITII Calendar added")
 
-calender.print_calendar_to_file(config['icsfile'])
-conn.close()
+    calender.print_calendar_to_file(config['icsfile'])
+    conn.close()
 
