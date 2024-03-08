@@ -19,6 +19,7 @@ class Organizer:
         for data_event in self.data_in:
             part_data = re.sub('[^A-Z]', '', data_event)
             if part_data == data_event:
+
                 if self.surname is not None:
                     self.surname += '-' + data_event
                 else:
@@ -37,13 +38,14 @@ class Organizer:
 @dataclass
 class EventInfo:
     data: dict
-    uid: str = field(init=False)
+
     summary: str = field(init=False)
     description: str = field(init=False)
     dtstart: datetime = field(init=False)
     dtend: datetime = field(init=False)
     location: str = field(init=False)
     organizer: vCalAddress or str = field(init=False)
+
     attendee: list[vCalAddress] = field(init=False)
 
     def __post_init__(self):
@@ -109,6 +111,7 @@ class CalendarTools:
     def __init__(self, auto=True):
         self.cal = Calendar()
         self.autonomie = auto
+
         self.cal.add('method', 'REQUEST')
         self.cal.add('prod_id', '-//Spiti Calendar//mycpe.cpe.fr')
         self.cal.add('version', '2.0')
@@ -118,6 +121,7 @@ class CalendarTools:
         for event_calendar in json_data:
             event_info = EventInfo(event_calendar)
             e = Event()
+
             e.add('uid', event_info.uid)
             e.add('summary', event_info.summary)
             e.add('dtstart', event_info.dtstart)
@@ -127,6 +131,7 @@ class CalendarTools:
             for element in event_info.attendee:
                 e.add('attendee', element)
             e.add('description', event_info.description)
+
             if self.autonomie == True:
                 self.cal.add_component(e)
             else:
