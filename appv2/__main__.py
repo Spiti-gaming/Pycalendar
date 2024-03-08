@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from dateutil import parser
 from datetime import datetime
 import datetime as dt
-from icalendar import Calendar, Event, vCalAddress, vText
+from icalendar import Calendar, Event, vCalAddress, vText, Timezone
 import pytz
 
 
@@ -23,10 +23,9 @@ class EventInfo:
 
 
     def __post_init__(self):
-        self.dtstart = parser.parse(self.data['date_debut'])
-        self.dtend = parser.parse(self.data['date_fin'])
+        self.dtstart = parser.parse(self.data['date_debut']).astimezone(pytz.timezone('Europe/Paris'))
+        self.dtend = parser.parse(self.data['date_fin']).astimezone(pytz.timezone('Europe/Paris'))
         self.location = self.data['ressource']
-        print(self.dtstart, self.dtend)
         if self.data['description'] is None:
             self.summary = self.data['favori']["f3"]
         else:
@@ -46,9 +45,9 @@ class CalendarTools:
         self.cal.add('version', '2.0')
 
     def add_to_calendar_from_webaurion(self, json_data):
+
         for event_calendar in json_data:
             if event_calendar['type_activite']:
-
                 event_info = EventInfo(event_calendar)
                 e = Event()
                 e.add('summary', event_info.summary)
@@ -72,7 +71,7 @@ class CalendarTools:
 
 def years():
 
-    start = dt.date.fromisoformat(str(datetime.today().year) + '-08-01')
+    start = dt.date.fromisoformat(str(datetime.today().year - 1) + '-08-01')
     end = dt.date.fromisoformat(str(datetime.today().year + 1) + '-08-01')
     return start, end
 
@@ -88,7 +87,6 @@ def week():
 
 with open("config.json") as f:
     config = json.load(f)
-print(datetime.today())
 conn = http.client.HTTPSConnection(config['webaurion']['host'])
 payload = 'username='+config['webaurion']['username']+'&password='+config['webaurion']['password']
 headers = {
@@ -108,9 +106,12 @@ else:
 conn.request("GET", f"/mobile/mon_planning?date_debut={start}&date_fin={end}", "", headers)
 res = conn.getresponse()
 data2 = res.read()
+
 data_json = json.loads(data2.decode("utf-8"))
+
 calender = CalendarTools()
 calendrier = calender.add_to_calendar_from_webaurion(data_json)
 
 calender.print_calendar_to_file(config['icsfile'])
 conn.close()
+
