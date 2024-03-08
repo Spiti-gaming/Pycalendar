@@ -99,7 +99,7 @@ def week():
     return start, end
 
 
-with open("../config.json") as f:
+with open("config.json") as f:
     config = json.load(f)
 conn = http.client.HTTPSConnection(config['webaurion']['host'])
 payload = 'username='+config['webaurion']['username']+'&password='+config['webaurion']['password']
