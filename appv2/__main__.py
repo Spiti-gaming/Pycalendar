@@ -23,9 +23,10 @@ class EventInfo:
 
 
     def __post_init__(self):
-        self.dtstart = parser.parse(self.data['date_debut']).astimezone(pytz.utc)
-        self.dtend = parser.parse(self.data['date_fin']).astimezone(pytz.utc)
+        self.dtstart = parser.parse(self.data['date_debut'])
+        self.dtend = parser.parse(self.data['date_fin'])
         self.location = self.data['ressource']
+        print(self.dtstart, self.dtend)
         if self.data['description'] is None:
             self.summary = self.data['favori']["f3"]
         else:
@@ -85,9 +86,9 @@ def week():
     return start, end
 
 
-with open("../config.json") as f:
+with open("config.json") as f:
     config = json.load(f)
-
+print(datetime.today())
 conn = http.client.HTTPSConnection(config['webaurion']['host'])
 payload = 'username='+config['webaurion']['username']+'&password='+config['webaurion']['password']
 headers = {
