@@ -64,7 +64,6 @@ class EventInfo:
                 or self.data[3] == "TP" \
                 or self.data[3] == "TD" \
                 or self.data[3] == "Langues" \
-
                 or self.data[3] == "Examenmachine" \
                 or self.data[3] == "Examenécrit" \
                 or self.data[3] == "Projet":

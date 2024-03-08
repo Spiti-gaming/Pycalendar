@@ -1,10 +1,30 @@
-{
-    "webaurion":{
-        "host":"mycpe.cpe.fr",
-        "username":"exemple@cpe.fr",
-        "password":"myPassword",
-        "years": true, //Get All the years calendar (if false only 2 week)
-        "Autonomie": true
+[
+    {
+        "webaurion":{
+            "host":"mycpe.cpe.fr",
+            "username":"exemple@cpe.fr",
+            "password":"myPassword",
+            "years": true, //Get All the years calendar (if false only 2 week)
+            "Autonomie": true
+        },
+        "icsfile":"mycalendar.ics"
+        "itii": {
+            "host":"portail.iri-lyon.com",
+            "url": "/netypareo/index.php/planning/ical/xxxx-xxxx-xxxxx-xxxx/"
+        }
     },
-    "icsfile":"mycalendar.ics"
-}
+    {
+        "webaurion":{
+            "host":"mycpe.cpe.fr",
+            "username":"exemple@cpe.fr",
+            "password":"myPassword",
+            "years": true, //Get All the years calendar (if false only 2 week)
+            "Autonomie": true
+        },
+        "icsfile":"mycalendar2.ics"
+        "itii": {
+            "host":"portail.iri-lyon.com",
+            "url": "/netypareo/index.php/planning/ical/xxxx-xxxx-xxxxx-xxxx/"
+        }
+    }
+]
