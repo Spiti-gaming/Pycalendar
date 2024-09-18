@@ -21,8 +21,8 @@ class EventInfo:
     event_type: str = field(init=False)
 
     def __post_init__(self):
-        self.dtstart = parser.parse(self.data['date_debut']).astimezone(pytz.timezone('Europe/Paris'))
-        self.dtend = parser.parse(self.data['date_fin']).astimezone(pytz.timezone('Europe/Paris'))
+        self.dtstart = parser.parse(self.data['date_debut']).astimezone(pytz.timezone('UTC'))
+        self.dtend = parser.parse(self.data['date_fin']).astimezone(pytz.timezone('UTC'))
         self.location = self.data['ressource']
         self.summary = self.data['description'] if self.data['description'] else self.data['favori']["f3"]
         self.event_type = self.data['type_activite']
@@ -37,7 +37,7 @@ class CalendarTools:
         self.autonomie = auto
         self.cal.add('prod_id', '-//Spiti Calendar//mycpe.cpe.fr')
         self.cal.add('version', '2.0')
-        self.cal.add('X-WR-TIMEZONE', 'Europe/Paris')
+        self.cal.add('X-WR-TIMEZONE', 'UTC')
 
     def add_to_calendar_from_webaurion(self, json_data):
         for event_calendar in json_data:
@@ -45,6 +45,7 @@ class CalendarTools:
                 if not event_calendar['ressource']  or "ITII" not in event_calendar["ressource"]:
                     event_info = EventInfo(event_calendar)
                     e = Event()
+                    e.add('UID', hash(event_info.summary+str(event_info.dtstart)))
                     e.add('summary', f"{event_info.summary} - {event_info.event_type}")
                     e.add('dtstart', event_info.dtstart)
                     e.add('dtend', event_info.dtend)
@@ -73,16 +74,15 @@ class CalendarTools:
 
         for com in g.walk():
             if com.name == "VEVENT":
-                dtstart_utc = com.decoded('dtstart').isoformat()
-                dtend_utc = com.decoded('dtend').isoformat()
+                dtstart_utc = com.decoded('dtstart')
+                dtend_utc = com.decoded('dtend')
 
-                # Converting UTC dates to Paris timezone
-                dtstart_paris = parser.parse(dtstart_utc).astimezone(pytz.timezone('Europe/Paris'))
-                dtend_paris = parser.parse(dtend_utc).astimezone(pytz.timezone('Europe/Paris'))
+
                 e = Event()
+                e.add('UID',hash(com.get("summary")+str(dtstart_utc.astimezone(pytz.timezone('UTC')))))
                 e.add('summary', com.get("summary"))
-                e.add('dtstart', dtstart_paris)
-                e.add('dtend', dtend_paris)
+                e.add('dtstart', dtstart_utc.astimezone(pytz.timezone('UTC')))
+                e.add('dtend', dtend_utc.astimezone(pytz.timezone('UTC')))
                 e.add('location', com.get("location"))
                 e.add('organizer', com.get("SUMMARY").split(" - ")[1])
                 e.add('description', com.get("description"))
