@@ -41,8 +41,8 @@ class CalendarTools:
 
     def add_to_calendar_from_webaurion(self, json_data):
         for event_calendar in json_data:
-            if event_calendar['type_activite']:
-                if not event_calendar['ressource'] or "Site" not in event_calendar['ressource']:
+            if event_calendar['type_activite'] and "FHES" not in event_calendar['type_activite']:
+                if not event_calendar['ressource']  or "ITII" not in event_calendar["ressource"]:
                     event_info = EventInfo(event_calendar)
                     e = Event()
                     e.add('summary', f"{event_info.summary} - {event_info.event_type}")
@@ -89,7 +89,6 @@ class CalendarTools:
 
 
                 if com.get('summary') and "CPE" not in com.get('summary'):
-                    print(e)
                     self.cal.add_component(e)
 
 
