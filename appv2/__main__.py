@@ -43,12 +43,13 @@ class CalendarTools:
         self.autonomie = auto
         self.cal.add('prod_id', '-//Spiti Calendar//mycpe.cpe.fr')
         self.cal.add('version', '2.0')
+        self.cal.add('X-WR-TIMEZONE', 'Europe/Paris')
 
     def add_to_calendar_from_webaurion(self, json_data):
 
         for event_calendar in json_data:
             if event_calendar['type_activite']:
-                if not event_calendar['ressource'] or "ITII" not in event_calendar['ressource']:
+                if not event_calendar['ressource'] or "Site" not in event_calendar['ressource'] :
                     event_info = EventInfo(event_calendar)
                     e = Event()
                     e.add('summary', f"{event_info.summary} - {event_info.event_type}")
