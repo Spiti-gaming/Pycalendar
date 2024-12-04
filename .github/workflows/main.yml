@@ -1,0 +1,46 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: docker
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Read current version
+        id: read_version
+        run: |
+          VERSION=$(cat VERSION)
+          echo "Current version: $VERSION"
+          echo "VERSION=$VERSION" >> $GITHUB_ENV          
+
+      - name: Get commit UUID
+        id: get_commit_uuid
+        run: echo "COMMIT_UUID=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+      - name: Update docker-compose.yml
+        run: |
+          sed -i "s|image: .*|image: \"${{ secrets.DOCKER_USERNAME }}/pycalendar:${{ env.VERSION }}\"|" docker-compose.yml          
+
+      - name: Commit changes to docker-compose.yml on Deployed branch
+        run: |
+          git config --local user.name "github-actions"
+          git config --local user.email "github-actions@github.com"
+          git checkout -B Deployed  # Crée ou bascule sur la branche Deployed
+          git add docker-compose.yml
+          git commit -m "Update docker-compose.yml with new image tag: ${{ env.VERSION }}"
+          git push --force origin Deployed  # Pousse les changements vers la branche Deployed          
+
+      - name: Log in to Docker Hub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Build Docker image
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/pycalendar:${{ env.VERSION }} .
+
+      - name: Push Docker image
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/pycalendar:${{ env.VERSION }}

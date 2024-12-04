@@ -1,0 +1,24 @@
+version: "3.9"
+
+services:
+  pycalendar:
+    image: "${DOCKER_USERNAME}/pycalendar:${VERSION}"
+    hostname: '{{.Node.Hostname}}'
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.pycalendar.rule=${TRAEFIK_RULE}
+        - traefik.http.services.pycalendar.loadbalancer.server.port=5000
+    networks:
+      - traefik-public
+
+volumes:
+  PyCalendar_Config:
+    external: true
+
+networks:
+  traefik-public:
+    external: true

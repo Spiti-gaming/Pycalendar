@@ -1,56 +1,144 @@
-from app.TimeManip import TimeManip2
-from app.JsonManip import JsonManip
-from app.Calendar import CalendarTools
-from app.WebAurion import WebAurion
+#!/usr/bin/env python3
+
+import http.client
 import json
+from dataclasses import dataclass, field
+from dateutil import parser
+from datetime import datetime
+import datetime as dt
+from icalendar import Calendar, Event, vCalAddress
+import pytz
+from icalendar.prop import vDatetime
 
 
-with open("./config.json") as json_data_file:
-    config = json.load(json_data_file)
+@dataclass
+class EventInfo:
+    data: dict
+    summary: str = field(init=False)
+    description: str = field(init=False)
+    dtstart: datetime = field(init=False)
+    dtend: datetime = field(init=False)
+    location: str = field(init=False)
+    organizer: vCalAddress or str = field(init=False)
+    event_type: str = field(init=False)
 
-timestamp = TimeManip2(type_year=config['webaurion']['years'])
-
-MyCpe = WebAurion(config['webaurion']['host'])
-
-# ===============================================================================
-#       Login
-# ===============================================================================
-payload = 'username=' + config['webaurion']['username'] + '&password=' + config['webaurion']['password'] + '&j_idt27='
-
-if not MyCpe.base_request(payload, "/login", True):
-    exit("Error in connection")
-
-# ===============================================================================
-#       Get Planning ID
-# ===============================================================================
-
-payload = 'form=form&form%3AlargeurDivCenter=1620&form%3AidInit=' + MyCpe.formId + '&form%3Asauvegarde=&form%3Aj_idt817%3Aj_idt820_view=basicDay&form%3Aj_idt834%3Aj_idt838=&form%3Aj_idt834%3Atodos281544_selection=&form%3Aj_idt782%3Aj_idt784_dropdown=1&form%3Aj_idt782%3Aj_idt784_mobiledropdown=1&form%3Aj_idt782%3Aj_idt784_page=0&javax.faces.ViewState=' + MyCpe.ViewState + '&form%3Asidebar=form%3Asidebar&form%3Asidebar_menuid=6'
-
-if not MyCpe.base_request(payload, "/faces/MainMenuPage.xhtml", True):
-    exit("Error in connection")
-
-# ===============================================================================
-#       Calendar Page
-# ===============================================================================
-
-payload = 'javax.faces.partial.ajax=true&javax.faces.source=form%3Aj_idt118&javax.faces.partial.execute=form%3Aj_idt118&javax.faces.partial.render=form%3Aj_idt118&form%3Aj_idt118=form%3Aj_idt118&form%3Aj_idt118_start=' + timestamp.time_stamp_start + '&form%3Aj_idt118_end=' + timestamp.time_stamp_stop + '&form=form&form%3AlargeurDivCenter=1620&form%3AidInit=' + MyCpe.formId + '&form%3Adate_input=02%2F10%2F2023&form%3Aj_idt118_view=agendaWeek&form%3AoffsetFuseauNavigateur=-7200000&form%3Aonglets_activeIndex=0&form%3Aonglets_scrollState=0&javax.faces.ViewState=' + MyCpe.ViewState
-data_str = MyCpe.base_request(payload, "/faces/Planning.xhtml", False)
+    def __post_init__(self):
+        self.dtstart = parser.parse(self.data['date_debut']).astimezone(pytz.timezone('UTC'))
+        self.dtend = parser.parse(self.data['date_fin']).astimezone(pytz.timezone('UTC'))
+        self.location = self.data['ressource']
+        self.summary = self.data['description'] if self.data['description'] else self.data['favori']["f3"]
+        self.event_type = self.data['type_activite']
+        self.description = self.data['favori']["f3"]
+        self.organizer = self.data['intervenants']
+        self.data = None
 
 
-json_data = JsonManip(data_str)
-# Extract JSON data from CDATA section
-json_data.extract(r'<update id="form:j_idt118"><!\[CDATA\[(.*?)\]\]></update>', 1)
-json_data.extract(r'{"events".*}', 0)
+class CalendarTools:
+    def __init__(self, auto=True):
+        self.cal = Calendar()
+        self.autonomie = auto
+        self.cal.add('prod_id', '-//Spiti Calendar//mycpe.cpe.fr')
+        self.cal.add('version', '2.0')
+        self.cal.add('X-WR-TIMEZONE', 'UTC')
 
-# Convert JSON data to Python dictionary
-data = json_data.get_data()
+    def add_to_calendar_from_webaurion(self, json_data):
+        for event_calendar in json_data:
+            if event_calendar['type_activite'] and "FHES" not in event_calendar['type_activite']:
+                if not event_calendar['ressource']  or "ITII" not in event_calendar["ressource"]:
+                    event_info = EventInfo(event_calendar)
+                    e = Event()
+                    e.add('UID', hash(event_info.summary+str(event_info.dtstart)))
+                    e.add('summary', f"{event_info.summary} - {event_info.event_type}")
+                    e.add('dtstart', event_info.dtstart)
+                    e.add('dtend', event_info.dtend)
+                    e.add('location', event_info.location)
+                    e.add('organizer', event_info.organizer)
+                    e.add('description', f"{event_info.description}\n{event_info.event_type}")
+                    if self.autonomie:
+                        self.cal.add_component(e)
+                    else:
+                        if event_info.event_type == "Autonomie":
+                            self.cal.add_component(e)
 
-Calendar = CalendarTools(config['webaurion']['Autonomie'])
+    def print_calendar_to_file(self, directory):
+        with open(directory, 'wb') as f:
+            print("Calendar File Created")
+            f.write(self.cal.to_ical())
 
-# Loop through the events and add them to the calendar
+    def get_itii_calendar(self, url, host):
+        conn = http.client.HTTPConnection(host)
+        conn.request("GET", url)
+        res = conn.getresponse()
+        data = res.read()
+        calendar = data.decode("utf-8")
+        g = Calendar.from_ical(calendar)
+        timezone_paris = pytz.timezone('Europe/Paris')
 
-Calendar.add_to_calendar_from_webaurion(data['events'])
+        for com in g.walk():
+            if com.name == "VEVENT":
+                dtstart_utc = com.decoded('dtstart')
+                dtend_utc = com.decoded('dtend')
 
-# Write the calendar to a file
-Calendar.print_calendar_to_file(config['icsfile'])
 
+                e = Event()
+                e.add('UID',hash(com.get("summary")+str(dtstart_utc.astimezone(pytz.timezone('UTC')))))
+                e.add('summary', com.get("summary"))
+                e.add('dtstart', dtstart_utc.astimezone(pytz.timezone('UTC')))
+                e.add('dtend', dtend_utc.astimezone(pytz.timezone('UTC')))
+                e.add('location', com.get("location"))
+                e.add('organizer', com.get("SUMMARY").split(" - ")[1])
+                e.add('description', com.get("description"))
+
+
+                if com.get('summary') and "CPE" not in com.get('summary'):
+                    self.cal.add_component(e)
+
+
+def years():
+    start = dt.date.fromisoformat(str(datetime.today().year - 1) + '-08-01')
+    end = dt.date.fromisoformat(str(datetime.today().year + 1) + '-08-01')
+    return start, end
+
+
+def week():
+    start = datetime.today() - dt.timedelta(days=datetime.today().weekday())
+    end = start + dt.timedelta(days=20)
+    start = start.strftime("%Y-%m-%d")
+    end = end.strftime("%Y-%m-%d")
+    return start, end
+
+
+with open("config/config.json") as f:
+    configs = json.load(f)
+
+for config in configs:
+    conn = http.client.HTTPSConnection(config['webaurion']['host'])
+    payload = 'username=' + config['webaurion']['username'] + '&password=' + config['webaurion']['password']
+    headers = {
+        'Content-Type': 'application/x-www-form-urlencoded'
+    }
+    conn.request("POST", "/login", payload, headers)
+    res = conn.getresponse()
+    data = res.read()
+    headers['Cookie'] = res.getheader('Set-Cookie').split(";")[0]
+
+    if config['webaurion']['years']:
+        start, end = years()
+    else:
+        start, end = week()
+
+    conn.request("GET", f"/mobile/mon_planning?date_debut={start}&date_fin={end}", "", headers)
+    res = conn.getresponse()
+    data2 = res.read()
+    data_json = json.loads(data2.decode("utf-8"))
+
+    calender = CalendarTools()
+    calender.add_to_calendar_from_webaurion(data_json)
+
+    if config.get('itii'):
+        calender.get_itii_calendar(config['itii']['url'], config['itii']['host'])
+        print("ITII Calendar added")
+
+    calender.print_calendar_to_file("ical/"+config['icsfile'])
+
+    conn.close()

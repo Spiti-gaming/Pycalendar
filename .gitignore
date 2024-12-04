@@ -1,4 +1,4 @@
-config.json
+config/config.json
 __pycache__
 *.ics
 ./venv/
