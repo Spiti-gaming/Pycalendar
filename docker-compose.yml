@@ -4,6 +4,8 @@ services:
   pycalendar:
     image: "${DOCKER_USERNAME}/pycalendar:${VERSION}"
     hostname: '{{.Node.Hostname}}'
+    volumes:
+      - PyCalendar_Config:/app/config
     deploy:
       replicas: 1
       restart_policy:
