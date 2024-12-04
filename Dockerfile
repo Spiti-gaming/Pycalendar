@@ -22,7 +22,5 @@ RUN crontab /etc/cron.d/cronfile
 RUN chmod +x /entrypoint.sh
 RUN chmod +x index.py
 
-COPY config/config.json .
-
 
 ENTRYPOINT ["/entrypoint.sh"]
