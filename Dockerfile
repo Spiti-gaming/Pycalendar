@@ -6,6 +6,8 @@ COPY index.py .
 COPY requirements.txt .
 COPY api.py .
 
+RUN mkdir "ical"
+
 
 
 RUN pip install -r requirements.txt
