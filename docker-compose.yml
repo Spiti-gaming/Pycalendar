@@ -6,6 +6,8 @@ services:
     hostname: '{{.Node.Hostname}}'
     volumes:
       - PyCalendar_Config:/app/config
+    environment:
+      - TZ=Europe/Paris 
     deploy:
       replicas: 1
       restart_policy:
