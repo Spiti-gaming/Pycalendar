@@ -6,6 +6,7 @@ services:
     hostname: '{{.Node.Hostname}}'
     volumes:
       - PyCalendar_Config:/app/config
+      - PyCalendar_Log:/var/log
     environment:
       - TZ=Europe/Paris 
     deploy:
@@ -20,6 +21,7 @@ services:
       - traefik-public
 
 volumes:
+  PyCalendar_Log:
   PyCalendar_Config:
     external: true
 
