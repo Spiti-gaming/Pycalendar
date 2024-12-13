@@ -1,5 +1,5 @@
 icalendar==5.0.12
-pytz~=2024.1
+pytz~=2024.2
 python-dateutil~=2.9.0
 
 
