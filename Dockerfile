@@ -6,12 +6,15 @@ COPY index.py .
 COPY requirements.txt .
 COPY api.py .
 
+
 RUN mkdir "ical"
 
 
 
 RUN pip install -r requirements.txt
 RUN apt-get update && apt-get -y install cron
+
+COPY cron.sh .
 COPY /cron/cronfile /etc/cron.d/cronfile
 
 COPY entrypoint.sh /entrypoint.sh
