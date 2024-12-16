@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
   pycalendar:
-    image: "${DOCKER_USERNAME}/pycalendar:${VERSION}"
+    image: "spitileplusbeau/pycalendar:v3.1.0"
     hostname: '{{.Node.Hostname}}'
     volumes:
       - PyCalendar_Config:/app/config
