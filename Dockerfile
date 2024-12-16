@@ -23,6 +23,7 @@ RUN crontab /etc/cron.d/cronfile
 
 RUN chmod +x /entrypoint.sh
 RUN chmod +x index.py
+RUN chmod +x cron.sh
 
 
 ENTRYPOINT ["/entrypoint.sh"]
